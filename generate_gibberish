@@ -1,0 +1,72 @@
+import re
+from random import choices
+
+MAX_LEN = 15
+MIN_LEN = 3
+PRED_SIZE = 2
+
+with open("az_ember_tragediaja.txt", "r") as f:
+    raw_text = f.read().casefold()  # make it lowercase
+
+
+raw_text = re.sub(r"\s{1,}", " ", raw_text)
+filtered_text = "".join(letter for letter in raw_text if letter.isalnum() or letter == " ")
+
+frequencies = {}
+
+last = ""
+for i in range(0, len(filtered_text) - PRED_SIZE + 1):
+    slic = filtered_text[i : i + PRED_SIZE]
+    if last not in frequencies:
+        frequencies[last] = {}
+
+    if slic not in frequencies[last]:
+        frequencies[last][slic] = 1
+    last = slic
+
+del frequencies[""]
+
+start = input("Starting slice: ").casefold()
+
+while len(start) != PRED_SIZE:
+    print(f"The slice should be {PRED_SIZE} chars long!")
+    start = input("Starting slice: ").casefold()
+
+
+# Most likelyhood
+print()
+x = start
+print("Most likely prediction: ")
+print(x[:-1], end="")
+for i in range(MAX_LEN):
+    if i < MIN_LEN:
+        cont = max(frequencies[x], key=lambda cont: frequencies[x][cont] * (cont != " "))
+    else:
+        cont = max(frequencies[x], key=lambda cont: frequencies[x][cont])
+
+    print(x[-1], end="")
+    if cont[-1] == " ":
+        break
+    x = cont
+print()
+
+# Weighted random
+x = start
+print()
+print("SWeighted random prediction: ")
+print(x[:-1], end="")
+for i in range(MAX_LEN):
+    if i < MIN_LEN:
+        letters = [k for k in frequencies[x] if not k.endswith(" ")]
+        weights = [v for k, v in frequencies[x].items() if not k.endswith(" ")]
+
+        cont = choices(letters, weights=weights, k=1)[0]
+
+    else:
+        cont = choices(list(frequencies[x].keys()), weights=frequencies[x].values(), k=1)[0]
+
+    print(x[-1], end="")
+    if cont[-1] == " ":
+        break
+    x = cont
+print()
